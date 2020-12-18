@@ -67,7 +67,7 @@ def handle_category_click(call):
             bot.send_photo(
                 call.message.chat.id,
                 p.image.read(),
-                caption=f'{p.title}\n{description}\n{p.parameters}\n\nЦена - {p.price} грн'
+                caption=f'{p.title}\n\n{description}\n{p.parameters}\n\nЦена - {p.price} грн'
             )
 
 

@@ -48,7 +48,8 @@ class Parameters(me.EmbeddedDocument):
     additional_description = me.StringField()
 
     def __str__(self):
-        return f'Высота/ширина/вес: {self.height}/{self.width}/{self.weight}'
+        return f'Высота/ширина/вес: {self.height}/{self.width}/{self.weight}\n' \
+               f'{self.additional_description}'
 
 
 class Product(me.Document):
