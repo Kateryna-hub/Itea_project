@@ -1,4 +1,4 @@
-Technology stack
+Стэк технологий
 
 Python3
 MongoDB
@@ -10,38 +10,50 @@ Google cloud
 Nginx
 Gunicorn
 Marhsmallow
-DB entities
+Сущности бд
 
-Products
+Продукты
 
-Name
-Description
-{Category}
-Price
-Availability
-Picture
-Discount in percent
-Categories
+Название
+Описание
+{Категория}
+Цена
+Наличие
+Картинка
+Скидка в процентах
+Категории
 
-Name
-Description
+Название
+Описание
 {parent}
-[{subcategories}]
-Users
+[{подкатегории}]
+Пользователи
 
-telegram id (PC)
-Phone number
-Nickname
-Basket
+telegram id (ПК)
+Номер телефона
+Никнейм
+Корзина
 
-Orders
+Заказы
 
-news
+Новости
 
-Title
-Content
-Date of publication
+Заголовок
+Содержимое
+Дата публикации
 #Lesson 12
 
-Create an abstract collection. It must contain two fields, created and modified, and store the date and time in them. created - object creation time, modified - last update time. We place the logic over time in the save method.
-Initialize the bot. Describe the / start handler. At startup, greet the user. Create the texts module, which will store the text permanently.
+Создать абстрактную колекцию. Она должна содержать два поля created и modified, и хранить в них дату и время. created - время создания объекта, modified - время последнего обновления. Логику со временем размещаем в методе save.
+Проинициализровать бот. Описать хендлер /start. При старте приветсвовать пользователя. Создать модуль constants, в котором будем хранитьс текста и другие константы.
+#Lesson 13
+
+Описать хендлер, который будет отрабатывать при клике на кнопку "Новости". Выводить последние 5 новостей отдельными сообщениями.
+Колекция новостей должна наследовать абстрактную колекцию (created_at, modified_at, 12.1)
+Описать хендлер для клика на кнопку определенной категории. Выводить названия всех продуктов, которые относятся к кликнкутой категории. Названия продуктов выводить отдельными сообщениями.
+
+#Lesson 14
+
+Описать метод форматирования описания продукта (цена, название, описание, характеристки). Отправлять эту информацию под картинкой продукта.
+Описать хендлер для обработки кликов на категории. (Сделано на занятии)
+Описать колекции корзины и заказа
+
