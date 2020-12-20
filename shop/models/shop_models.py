@@ -78,6 +78,10 @@ class Product(me.Document):
     category = me.ReferenceField(Category, required=True)
     parameters = me.EmbeddedDocumentField(Parameters)
 
+    @property
+    def product_price(self):
+        return (100 - self.discount) / 100 * self.price
+
 
 class Cart(TimePublished):
     user = me.ReferenceField(User, required=True)
