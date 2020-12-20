@@ -1,5 +1,6 @@
 import mongoengine as me
 from . import me
+from .extra_models import TimePublished
 
 
 class User(me.Document):
@@ -9,11 +10,26 @@ class User(me.Document):
     phone_number = me.StringField(max_length=12)
     email = me.EmailField()
     is_blocked = me.BooleanField(default=False)
+    address = me.StringField(min_length=4)
+    is_status_change = me.IntField(default=0)
 
     def formatted_data(self):
         return f'ID - {self.telegram_id}\nНикнейм - {self.username}\n' \
                f'Имя - {self.first_name}\nтелефон - {self.phone_number}\n' \
                f'email - {self.email}'
+
+    def get_active_card(self):
+        cart = Cart.objects(user=self, is_active=True).first()
+        if not cart:
+            cart = Cart.objects.create(user=self)
+            return cart
+        return cart
+
+    @staticmethod
+    def get_status_change(id):
+        user = User.objects.get(telegram_id=id)
+        user_status_change = user.is_status_change
+        return user_status_change
 
 
 class Category(me.Document):
@@ -61,6 +77,16 @@ class Product(me.Document):
     image = me.FileField()
     category = me.ReferenceField(Category, required=True)
     parameters = me.EmbeddedDocumentField(Parameters)
+
+
+class Cart(TimePublished):
+    user = me.ReferenceField(User, required=True)
+    products = me.ListField(me.ReferenceField(Product))
+    is_active = me.BooleanField(default=True)
+
+    def add_product(self, product):
+        self.products.append(product)
+        self.save()
 
 
 

@@ -17,6 +17,11 @@ class TimePublished(me.Document):
         self.modified = datetime.datetime.now()
         super().save(query=None, **update)
 
+    def update(self, **update):
+        self.modified = datetime.datetime.now()
+        super().save(query=None, **update)
+
+
 
 class News(TimePublished):
     title = me.StringField(required=True, min_length=2, max_length=256)
