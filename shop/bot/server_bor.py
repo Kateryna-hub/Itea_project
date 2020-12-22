@@ -17,5 +17,7 @@ def handle_webhook():
         return ''
     abort(403)
 
+bot.remove_webhook()
+time.sleep(0.5)
 
-bot.set_webhook(config.WEBHOOK_URL)
+bot.set_webhook(config.WEBHOOK_URL, certificate=open('webhook_cert.pem'))

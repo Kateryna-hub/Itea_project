@@ -1,8 +1,8 @@
 import json
-
+from flask import Flask, request, abort
 from mongoengine import NotUniqueError
 from telebot import TeleBot
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, Message
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, Message, Update
 
 from ..models.shop_models import Category, User, Product, Cart, Order
 from ..models.extra_models import News
@@ -11,6 +11,23 @@ from .utils import inline_kb_from_iterable, inline_kb_from_list
 from . import constants
 
 bot = TeleBot(TOKEN)
+
+
+app = Flask(__name__)
+#bot = TeleBot(config.TOKEN)
+
+
+@app.route(config.WEBHOOK_URI, methods=['POST'])
+def handle_webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data()
+        update = Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return ''
+    abort(403)
+
+
+
 
 
 @bot.message_handler(commands=['start'])

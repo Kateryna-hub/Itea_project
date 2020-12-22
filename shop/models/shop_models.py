@@ -22,7 +22,7 @@ class User(me.Document):
         cart = Cart.objects(user=self, is_active=True).first()
         if not cart:
             cart = Cart(user=self).save()
-            print(cart)
+            cart = Cart.objects(user=self, is_active=True).first()
             return cart
         print(cart)
         return cart
