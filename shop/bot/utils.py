@@ -28,21 +28,21 @@ def inline_kb_from_iterable(
     return kb
 
 
-def inline_kb_settings(
+def inline_kb_from_list(
         tag,
-        s_buttons,
+        text_buttons,
         id_field
     ):
     buttons = []
 
-    for i in s_buttons:
+    for i in text_buttons:
         json_data = json.dumps({
             'id': str(id_field),
             'tag': tag
         })
         buttons.append(
             InlineKeyboardButton(
-                text=s_buttons[i],
+                text=text_buttons[i],
                 callback_data=json_data
             )
         )

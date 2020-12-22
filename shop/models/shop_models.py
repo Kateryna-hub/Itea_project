@@ -7,7 +7,7 @@ class User(me.Document):
     telegram_id = me.IntField(primary_key=True)
     username = me.StringField(min_length=2, max_length=128)
     first_name = me.StringField(min_length=2, max_length=128)
-    phone_number = me.StringField(max_length=12)
+    phone_number = me.StringField(max_length=13)
     email = me.EmailField(min_length=10)
     is_blocked = me.BooleanField(default=False)
     address = me.StringField(min_length=4)
@@ -21,8 +21,10 @@ class User(me.Document):
     def get_active_card(self):
         cart = Cart.objects(user=self, is_active=True).first()
         if not cart:
-            cart = Cart.objects.create(user=self)
+            cart = Cart(user=self).save()
+            print(cart)
             return cart
+        print(cart)
         return cart
 
     @staticmethod
@@ -83,33 +85,34 @@ class Product(me.Document):
         return (100 - self.discount) / 100 * self.price
 
 
-class Cart(TimePublished):
-    user = me.ReferenceField(User, required=True)
-    products = me.ListField(me.ReferenceField(Product))
-    is_active = me.BooleanField(default=True)
-
-    def add_product(self, product):
-        self.products.append(product)
-        self.save()
-
-
-class OrderProduct(me.EmbeddedDocument):
+class CartProducts(me.EmbeddedDocument):
     title = me.StringField()
-    count = me.IntField()
+    count = me.IntField(default=1)
     price = me.FloatField()
 
     def __str__(self):
         return f'{self.title}\nКоличество - {self.count}\nЦена - {self.price}'
 
 
+class Cart(TimePublished):
+    user = me.ReferenceField(User, required=True)
+    products = me.ListField(me.EmbeddedDocumentField(CartProducts))
+    is_active = me.BooleanField(default=True)
+
+    def add_product(self, product):
+        cart_product = CartProducts(title=product.title, price=product.product_price)
+        self.products.append(cart_product)
+        self.save()
+
+
 class Order(TimePublished):
     number = me.IntField(min_value=1, required=True)
-    user = me.StringField(min_length=2, max_length=100)
-    address = me.StringField(max_length=2)
-    email = me.StringField()
-    phone = me.IntField(min_value=12)
-    products = me.ListField(me.EmbeddedDocumentField(OrderProduct))
+    cart = me.ReferenceField(Cart, required=True)
+    user_name = me.StringField(min_length=2, max_length=100)
+    address = me.StringField(min_length=2)
+    email = me.StringField(min_length=10)
+    phone = me.StringField(in_value=12)
     total_count = me.IntField()
-    total_price = me.IntField()
+    total_price = me.FloatField()
 
 

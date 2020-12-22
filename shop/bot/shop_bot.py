@@ -4,10 +4,10 @@ from mongoengine import NotUniqueError
 from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, Message
 
-from ..models.shop_models import Category, User, Product, Cart, Order, OrderProduct
+from ..models.shop_models import Category, User, Product, Cart, Order
 from ..models.extra_models import News
 from .config import TOKEN
-from .utils import inline_kb_from_iterable, inline_kb_settings
+from .utils import inline_kb_from_iterable, inline_kb_from_list
 from . import constants
 
 bot = TeleBot(TOKEN)
@@ -102,7 +102,7 @@ def handle_add_to_cart(call):
 def handle_settings(message: Message):
     user = User.objects.get(telegram_id=message.chat.id)
     data = user.formatted_data()
-    kb = inline_kb_settings(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(
         user.telegram_id,
         data,
@@ -127,7 +127,7 @@ def user_entering_name(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, first_name=first_name)
     data = user.formatted_data()
-    kb = inline_kb_settings(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
@@ -148,7 +148,7 @@ def user_entering_phone(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, phone=phone)
     data = user.formatted_data()
-    kb = inline_kb_settings(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
@@ -169,7 +169,7 @@ def user_entering_email(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, email=email)
     data = user.formatted_data()
-    kb = inline_kb_settings(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
@@ -190,7 +190,7 @@ def user_entering_address(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, address=address)
     data = user.formatted_data()
-    kb = inline_kb_settings(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
@@ -234,23 +234,18 @@ def handle_discount(message: Message):
 @bot.message_handler(func=lambda m: constants.START_KB[constants.CART] == m.text)
 def handle_cart(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button = KeyboardButton('Завершить заказ')
-    kb.add(button)
+    button = [KeyboardButton(n) for n in constants.CLOSE_ORDER]
+    kb.add(*button)
     bot.send_message(message.chat.id, 'Ваш заказ', reply_markup=kb)
     cart = Cart.objects.get(user=message.chat.id)
-    number = len(Order.objects()) + 1
-    order = Order(number=number)
-    products_list = []
     for p in cart.products:
-        op = OrderProduct(title=p.title, count=1, price=p.product_price)
-        products_list.append(op)
-        order.products = products_list
+        print(p)
         kb = InlineKeyboardMarkup()
         button1 = InlineKeyboardButton(
             text='+',
             callback_data=json.dumps(
                 {
-                    'id': str(p.id),
+                    'title': p.title,
                     'tag': constants.CART_TAG
                 }
             )
@@ -259,7 +254,7 @@ def handle_cart(message: Message):
             text='-',
             callback_data=json.dumps(
                 {
-                    'id': str(p.id),
+                    'title': p.title,
                     'tag': constants.CART_TAG
                 }
             )
@@ -267,7 +262,29 @@ def handle_cart(message: Message):
         kb.add(button1, button2)
         bot.send_message(
             message.chat.id,
-            f'{op.title}\nКоличество - {op.count}\nЦена -{op.price}',
+            f'{p.title}\nКоличество - {p.count}\nЦена -{p.price}',
             reply_markup=kb
         )
-    order.save()
+
+
+
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
+def handle_increase_number_of_product(call):
+    telegram_id = json.loads(call.data)['id']
+    user = User.objects.get(telegram_id=telegram_id)
+    user.modify(is_status_change=constants.FIRST_NAME)
+    bot.send_message(
+        call.message.chat.id,
+        'Напишите имя'
+    )
+
+
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
+def handle_reduce_number_of_product(call):
+    telegram_id = json.loads(call.data)['id']
+    user = User.objects.get(telegram_id=telegram_id)
+    user.modify(is_status_change=constants.FIRST_NAME)
+    bot.send_message(
+        call.message.chat.id,
+        'Напишите имя'
+    )
