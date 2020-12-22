@@ -1,6 +1,6 @@
 from flask import Flask, request, abort
 from telebot.types import Update
-import config
+import .config
 from telebot import TeleBot
 
 

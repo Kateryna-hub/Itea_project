@@ -4,9 +4,10 @@ from mongoengine import NotUniqueError
 from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, Message, Update
 
+
 from ..models.shop_models import Category, User, Product, Cart, Order
 from ..models.extra_models import News
-from .config import TOKEN
+from .config import TOKEN, WEBHOOK_URI
 from .utils import inline_kb_from_iterable, inline_kb_from_list
 from . import constants
 
@@ -17,7 +18,7 @@ app = Flask(__name__)
 #bot = TeleBot(config.TOKEN)
 
 
-@app.route(config.WEBHOOK_URI, methods=['POST'])
+@app.route(WEBHOOK_URI, methods=['POST'])
 def handle_webhook():
     if request.headers.get('content-type') == 'application/json':
         json_string = request.get_data()
