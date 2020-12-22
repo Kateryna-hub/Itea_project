@@ -282,12 +282,19 @@ def handle_cart(message: Message):
         )
 
 @bot.message_handler(func=lambda m: constants.ORDER_KB[constants.CONTINUE] == m.text)
-def handler_continue(call):
+def handler_continue(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
+    buttons = [KeyboardButton(n) for n in constants.ORDER_KB.values()]
     kb.add(*buttons)
+    root_categories = Category.get_root_categories()
+    kb = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
+    bot.send_message(
+        message.chat.id,
+        'Выберите категорию',
+        reply_markup=kb
+    )
 
-    bot.send_message(call.message.chat.id, 'Выберите категорию', reply_markup=kb)
+    bot.send_message(message.chat.id, 'Выберите категорию', reply_markup=kb)
 
 
 
