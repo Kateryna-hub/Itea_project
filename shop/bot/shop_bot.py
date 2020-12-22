@@ -28,9 +28,6 @@ def handle_webhook():
     abort(403)
 
 
-
-
-
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     try:
@@ -252,7 +249,7 @@ def handle_discount(message: Message):
 @bot.message_handler(func=lambda m: constants.START_KB[constants.CART] == m.text)
 def handle_cart(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button = [KeyboardButton(n) for n in constants.CLOSE_ORDER]
+    button = [KeyboardButton(n) for n in constants.ORDER_KB]
     kb.add(*button)
     bot.send_message(message.chat.id, 'Ваш заказ', reply_markup=kb)
     cart = Cart.objects.get(user=message.chat.id)
@@ -284,6 +281,16 @@ def handle_cart(message: Message):
             reply_markup=kb
         )
 
+@bot.message_handler(func=lambda m: constants.ORDER_KB[constants.CONTINUE] == m.text)
+def handler_continue(call):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
+    kb.add(*buttons)
+    root_categories = Category.get_root_categories()
+    kb_i = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
+    bot.send_message(call.message.chat.id, 'Выберите категорию', reply_markup=kb, kb_i)
+
+
 
 
 @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
@@ -295,7 +302,6 @@ def handle_increase_number_of_product(call):
         call.message.chat.id,
         'Напишите имя'
     )
-
 
 @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
 def handle_reduce_number_of_product(call):

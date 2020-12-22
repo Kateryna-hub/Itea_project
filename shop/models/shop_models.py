@@ -20,7 +20,7 @@ class User(me.Document):
 
     def get_active_card(self):
         cart = Cart.objects(user=self, is_active=True).first()
-        if not cart:
+        if not hasattr(cart, 'ad'):
             cart = Cart(user=self).save()
             cart = Cart.objects(user=self, is_active=True).first()
             return cart

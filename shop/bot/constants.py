@@ -1,7 +1,7 @@
 GREETINGS = 'Привет{}. Рады приветствовать тебя в нашем магазине-боте'
 ADD_TO_CART = 'Добавить в корзину'
 change_count_product = ['+', '-']
-CLOSE_ORDER = ['Завершить заказ', 'Продолжить выбор товаров']
+#CLOSE_ORDER = ['Завершить заказ', 'Продолжить выбор товаров']
 
 
 CATEGORIES = 1
@@ -9,6 +9,10 @@ CART = 2
 SETTINGS = 3
 NEWS = 4
 PRODUCTS_WITH_DISCOUNT = 5
+
+FINISH = 1
+CONTINUE = 2
+
 
 FIRST_NAME = 1
 PHONE = 2
@@ -28,6 +32,11 @@ SETTINGS_KB = {
     PHONE: 'Телефон',
     EMAIL: 'email',
     ADDRESS: 'Адрес',
+}
+
+ORDER_KB = {
+    FINISH: 'Завершить заказ',
+    CONTINUE: 'Продолжить выбор товаров'
 }
 
 CATEGORY_TAG = 1
