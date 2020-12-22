@@ -1,5 +1,7 @@
 GREETINGS = 'Привет{}. Рады приветствовать тебя в нашем магазине-боте'
 ADD_TO_CART = 'Добавить в корзину'
+change_count_product = ['+', '-']
+
 
 CATEGORIES = 1
 CART = 2
@@ -18,7 +20,8 @@ START_KB = {
 CATEGORY_TAG = 1
 SETTING_TAG = 2
 PRODUCT_TAG = 3
-
+PRODUCTS_WITH_DISCOUNT_TAG = 4
+CART_TAG = 5
 
 FIRST_NAME = 1
 PHONE = 2

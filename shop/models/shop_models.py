@@ -8,7 +8,7 @@ class User(me.Document):
     username = me.StringField(min_length=2, max_length=128)
     first_name = me.StringField(min_length=2, max_length=128)
     phone_number = me.StringField(max_length=12)
-    email = me.EmailField()
+    email = me.EmailField(min_length=10)
     is_blocked = me.BooleanField(default=False)
     address = me.StringField(min_length=4)
     is_status_change = me.IntField(default=0)
@@ -93,5 +93,23 @@ class Cart(TimePublished):
         self.save()
 
 
+class OrderProduct(me.EmbeddedDocument):
+    title = me.StringField()
+    count = me.IntField()
+    price = me.FloatField()
+
+    def __str__(self):
+        return f'{self.title}\nКоличество - {self.count}\nЦена - {self.price}'
+
+
+class Order(TimePublished):
+    number = me.IntField(min_value=1, required=True)
+    user = me.StringField(min_length=2, max_length=100)
+    address = me.StringField(max_length=2)
+    email = me.StringField()
+    phone = me.IntField(min_value=12)
+    products = me.ListField(me.EmbeddedDocumentField(OrderProduct))
+    total_count = me.IntField()
+    total_price = me.IntField()
 
 

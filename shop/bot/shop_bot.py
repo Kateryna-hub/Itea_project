@@ -4,7 +4,7 @@ from mongoengine import NotUniqueError
 from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, Message
 
-from ..models.shop_models import Category, User, Product
+from ..models.shop_models import Category, User, Product, Cart, Order, OrderProduct
 from ..models.extra_models import News
 from .config import TOKEN
 from .utils import inline_kb_from_iterable, inline_kb_settings
@@ -84,7 +84,8 @@ def handle_category_click(call):
             )
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.PRODUCT_TAG)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.PRODUCT_TAG or
+                            json.loads(c.data)['tag'] == constants.PRODUCTS_WITH_DISCOUNT_TAG)
 def handle_add_to_cart(call):
     product_id = json.loads(call.data)['id']
     product = Product.objects.get(id=product_id)
@@ -95,17 +96,6 @@ def handle_add_to_cart(call):
         call.id,
         'Продукт добавлен в корзину'
     )
-
-
-@bot.message_handler(func=lambda m: constants.START_KB[constants.NEWS] == m.text)
-def handle_news(message: Message):
-    news = News.objects.skip(News.objects.count() - 5)
-    for n in news:
-        show_news = f' {n.title}\n{n.body}'
-        bot.send_message(
-            message.chat.id,
-            show_news
-        )
 
 
 @bot.message_handler(func=lambda m: constants.START_KB[constants.SETTINGS] == m.text)
@@ -203,3 +193,81 @@ def user_entering_address(message):
     kb = inline_kb_settings(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
+
+@bot.message_handler(func=lambda m: constants.START_KB[constants.NEWS] == m.text)
+def handle_news(message: Message):
+    news = News.objects.skip(News.objects.count() - 5)
+    for n in news:
+        show_news = f' {n.title}\n{n.body}'
+        bot.send_message(
+            message.chat.id,
+            show_news
+        )
+
+
+@bot.message_handler(func=lambda m: constants.START_KB[constants.PRODUCTS_WITH_DISCOUNT] == m.text)
+def handle_discount(message: Message):
+    products = Product.objects(discount__ne=0)
+    for p in products:
+        kb = InlineKeyboardMarkup()
+        button = InlineKeyboardButton(
+            text=constants.ADD_TO_CART,
+            callback_data=json.dumps(
+                {
+                    'id': str(p.id),
+                    'tag': constants.PRODUCTS_WITH_DISCOUNT_TAG
+                }
+            )
+        )
+        kb.add(button)
+        description = p.description if p.description else ''
+        price = p.product_price
+        bot.send_photo(
+            message.chat.id,
+            p.image.read(),
+            caption=f'{p.title}\nСкидка - {p.discount}%\n{description}\n{p.parameters}\n'
+                    f'\nЦена со скидкой - {price} грн',
+            reply_markup=kb
+        )
+
+
+@bot.message_handler(func=lambda m: constants.START_KB[constants.CART] == m.text)
+def handle_cart(message: Message):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    button = KeyboardButton('Завершить заказ')
+    kb.add(button)
+    bot.send_message(message.chat.id, 'Ваш заказ', reply_markup=kb)
+    cart = Cart.objects.get(user=message.chat.id)
+    number = len(Order.objects()) + 1
+    order = Order(number=number)
+    products_list = []
+    for p in cart.products:
+        op = OrderProduct(title=p.title, count=1, price=p.product_price)
+        products_list.append(op)
+        order.products = products_list
+        kb = InlineKeyboardMarkup()
+        button1 = InlineKeyboardButton(
+            text='+',
+            callback_data=json.dumps(
+                {
+                    'id': str(p.id),
+                    'tag': constants.CART_TAG
+                }
+            )
+        )
+        button2 = InlineKeyboardButton(
+            text='-',
+            callback_data=json.dumps(
+                {
+                    'id': str(p.id),
+                    'tag': constants.CART_TAG
+                }
+            )
+        )
+        kb.add(button1, button2)
+        bot.send_message(
+            message.chat.id,
+            f'{op.title}\nКоличество - {op.count}\nЦена -{op.price}',
+            reply_markup=kb
+        )
+    order.save()
