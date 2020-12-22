@@ -1,11 +1,12 @@
 from flask import Flask, request, abort
 from telebot.types import Update
-import  config
+import config
 from telebot import TeleBot
 
 
 app = Flask(__name__)
 bot = TeleBot(config.TOKEN)
+
 
 @app.route(config.WEBHOOK_URI, methods=['POST'])
 def handle_webhook():
@@ -15,3 +16,6 @@ def handle_webhook():
         bot.process_new_updates([update])
         return ''
     abort(403)
+
+
+bot.set_webhook(config.WEBHOOK_URL)
