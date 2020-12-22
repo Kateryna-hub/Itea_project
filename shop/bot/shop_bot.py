@@ -286,9 +286,8 @@ def handler_continue(call):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
-    root_categories = Category.get_root_categories()
-    kb_i = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
-    bot.send_message(call.message.chat.id, 'Выберите категорию', reply_markup=kb, kb_i)
+
+    bot.send_message(call.message.chat.id, 'Выберите категорию', reply_markup=kb)
 
 
 
