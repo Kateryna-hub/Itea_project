@@ -12,7 +12,6 @@ from .config import TOKEN, WEBHOOK_URI
 from .utils import inline_kb_from_iterable, inline_kb_from_list
 from . import constants
 
-
 app = Flask(__name__)
 bot = TeleBot(TOKEN)
 
@@ -286,11 +285,11 @@ def handler_continue(message: Message):
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
     root_categories = Category.get_root_categories()
-    kb = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
+    kbi = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
     bot.send_message(
         message.chat.id,
         'Выберите категорию',
-        reply_markup=kb
+        reply_markup=kbi
     )
 
     bot.send_message(message.chat.id, 'Выберите категорию', reply_markup=kb)
