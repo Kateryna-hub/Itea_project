@@ -2,8 +2,8 @@ import json
 from flask import Flask, request, abort
 from mongoengine import NotUniqueError
 from telebot import TeleBot
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, \
-                          InlineKeyboardMarkup, InlineKeyboardButton, Message, Update
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
+                          InlineKeyboardButton, Message, Update
 
 
 from ..models.shop_models import Category, User, Product, Cart, Order
@@ -12,11 +12,9 @@ from .config import TOKEN, WEBHOOK_URI
 from .utils import inline_kb_from_iterable, inline_kb_from_list
 from . import constants
 
-bot = TeleBot(TOKEN)
-
 
 app = Flask(__name__)
-#bot = TeleBot(TOKEN)
+bot = TeleBot(TOKEN)
 
 
 @app.route(WEBHOOK_URI, methods=['POST'])
@@ -281,10 +279,11 @@ def handle_cart(message: Message):
             reply_markup=ikb
         )
 
+
 @bot.message_handler(func=lambda m: constants.ORDER_KB[constants.CONTINUE] == m.text)
 def handler_continue(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = [KeyboardButton(n) for n in constants.ORDER_KB.values()]
+    buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
     root_categories = Category.get_root_categories()
     kb = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
@@ -299,22 +298,22 @@ def handler_continue(message: Message):
 
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
-def handle_increase_number_of_product(call):
-    telegram_id = json.loads(call.data)['id']
-    user = User.objects.get(telegram_id=telegram_id)
-    user.modify(is_status_change=constants.FIRST_NAME)
-    bot.send_message(
-        call.message.chat.id,
-        'Напишите имя'
-    )
-
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
-def handle_reduce_number_of_product(call):
-    telegram_id = json.loads(call.data)['id']
-    user = User.objects.get(telegram_id=telegram_id)
-    user.modify(is_status_change=constants.FIRST_NAME)
-    bot.send_message(
-        call.message.chat.id,
-        'Напишите имя'
-    )
+# @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
+# def handle_increase_number_of_product(call):
+#     telegram_id = json.loads(call.data)['id']
+#     user = User.objects.get(telegram_id=telegram_id)
+#     user.modify(is_status_change=constants.FIRST_NAME)
+#     bot.send_message(
+#         call.message.chat.id,
+#         'Напишите имя'
+#     )
+#
+# @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
+# def handle_reduce_number_of_product(call):
+#     telegram_id = json.loads(call.data)['id']
+#     user = User.objects.get(telegram_id=telegram_id)
+#     user.modify(is_status_change=constants.FIRST_NAME)
+#     bot.send_message(
+#         call.message.chat.id,
+#         'Напишите имя'
+#     )
