@@ -12,11 +12,11 @@ from .config import TOKEN, WEBHOOK_URI
 from .utils import inline_kb_from_iterable, inline_kb_from_list
 from . import constants
 
-app = Flask(__name__)
+app_bot = Flask(__name__)
 bot = TeleBot(TOKEN)
 
 
-@app.route(WEBHOOK_URI, methods=['POST'])
+@app_bot.route(WEBHOOK_URI, methods=['POST'])
 def handle_webhook():
     if request.headers.get('content-type') == 'application/json':
         json_string = request.get_data().decode('utf-8')
