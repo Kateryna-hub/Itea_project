@@ -2,7 +2,8 @@ import json
 from flask import Flask, request, abort
 from mongoengine import NotUniqueError
 from telebot import TeleBot
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, Message, Update
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton, \
+                          InlineKeyboardMarkup, InlineKeyboardButton, Message, Update
 
 
 from ..models.shop_models import Category, User, Product, Cart, Order
@@ -15,7 +16,7 @@ bot = TeleBot(TOKEN)
 
 
 app = Flask(__name__)
-#bot = TeleBot(config.TOKEN)
+#bot = TeleBot(TOKEN)
 
 
 @app.route(WEBHOOK_URI, methods=['POST'])
@@ -249,13 +250,12 @@ def handle_discount(message: Message):
 @bot.message_handler(func=lambda m: constants.START_KB[constants.CART] == m.text)
 def handle_cart(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button = [KeyboardButton(n) for n in constants.ORDER_KB]
+    button = [KeyboardButton(n) for n in constants.ORDER_KB.values()]
     kb.add(*button)
     bot.send_message(message.chat.id, 'Ваш заказ', reply_markup=kb)
     cart = Cart.objects.get(user=message.chat.id)
     for p in cart.products:
-        print(p)
-        kb = InlineKeyboardMarkup()
+        ikb = InlineKeyboardMarkup()
         button1 = InlineKeyboardButton(
             text='+',
             callback_data=json.dumps(
@@ -278,7 +278,7 @@ def handle_cart(message: Message):
         bot.send_message(
             message.chat.id,
             f'{p.title}\nКоличество - {p.count}\nЦена -{p.price}',
-            reply_markup=kb
+            reply_markup=ikb
         )
 
 @bot.message_handler(func=lambda m: constants.ORDER_KB[constants.CONTINUE] == m.text)
