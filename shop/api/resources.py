@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask import request
 from shop.models.shop_models import User, Product, Category
+from shop.models.extra_models import News
 
 import json
 
@@ -14,18 +15,19 @@ class ShopResource(Resource):
 
         if product:
             product = Product.objects(title__contains=product)
-            for p in product:
-                p.modify(inc__view=1)
+
             return json.loads(product.to_json())
         if id:
             product = Product.objects(id=id)
-            product.modify(inc__view=1)
+
             return json.loads(product.to_json())
-        else:
-            user = User.objects()
-            # total_price = Product.objects.sum('price')
-            # shop = json.dumps({"products": count_products, "total_price": total_price})
+        if telegram_id:
+            user = User.objects(telegram_id=telegram_id)
             return json.loads(user.to_json())
+
+        else:
+            news = News.objects()
+            return json.loads(news.to_json())
 
     def post(self):
         try:
