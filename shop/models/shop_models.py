@@ -28,8 +28,8 @@ class User(me.Document):
         return cart
 
     @staticmethod
-    def get_status_change(id):
-        user = User.objects.get(telegram_id=id)
+    def get_status_change(id_):
+        user = User.objects.get(telegram_id=id_)
         user_status_change = user.is_status_change
         return user_status_change
 

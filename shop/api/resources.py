@@ -2,7 +2,7 @@ from flask_restful import Resource
 from flask import request
 from shop.models.shop_models import User, Product, Category
 from shop.models.extra_models import News
-
+from marshmallow.exceptions import ValidationError
 import json
 
 
@@ -31,12 +31,12 @@ class ShopResource(Resource):
 
     def post(self):
         try:
-            ShopProductSchemaWrite().load(request.json)
+            News().load(request.json)
         except ValidationError as e:
             return {'text': str(e)}
         product = Product(**request.json).save()
         product.reload()
-        return ShopProductSchemaRead().dump(product)
+        return News().dump(product)
 
     def put(self, id):
         product = Product.objects(id=id)
