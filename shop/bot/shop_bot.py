@@ -103,19 +103,25 @@ def handle_add_to_cart(call):
     product_id = json.loads(call.data)['id']
     product = Product.objects.get(id=product_id)
     user = User.objects.get(telegram_id=call.message.chat.id)
-    cart = user.get_active_card()
-    cart.add_product(product)
-    bot.answer_callback_query(
-        call.id,
-        'Продукт добавлен в корзину'
-    )
+    cart = user.get_active_cart()
+    is_product = cart.add_product(product)
+    if not is_product:
+        bot.answer_callback_query(
+            call.id,
+            'Продукт добавлен в корзину'
+        )
+    else:
+        bot.answer_callback_query(
+            call.id,
+            'Продукт уже есть в корзине'
+        )
 
 
 @bot.message_handler(func=lambda m: constants.START_KB[constants.SETTINGS] == m.text)
 def handle_settings(message: Message):
     user = User.objects.get(telegram_id=message.chat.id)
     data = user.formatted_data()
-    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_dict(constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(
         user.telegram_id,
         data,
@@ -123,7 +129,7 @@ def handle_settings(message: Message):
     )
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.SETTING_TAG)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.NAME_TAG)
 def handle_change_name(call):
     telegram_id = json.loads(call.data)['id']
     user = User.objects.get(telegram_id=telegram_id)
@@ -140,11 +146,11 @@ def user_entering_name(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, first_name=first_name)
     data = user.formatted_data()
-    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_dict(constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.SETTING_TAG)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.PHONE_TAG)
 def handle_change_phone(call):
     telegram_id = json.loads(call.data)['id']
     user = User.objects.get(telegram_id=telegram_id)
@@ -161,11 +167,11 @@ def user_entering_phone(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, phone=phone)
     data = user.formatted_data()
-    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_dict(constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.SETTING_TAG)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.EMAIL_TAG)
 def handle_change_email(call):
     telegram_id = json.loads(call.data)['id']
     user = User.objects.get(telegram_id=telegram_id)
@@ -182,11 +188,11 @@ def user_entering_email(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, email=email)
     data = user.formatted_data()
-    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_dict(constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.SETTING_TAG)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.ADDRESS_TAG)
 def handle_change_address(call):
     telegram_id = json.loads(call.data)['id']
     user = User.objects.get(telegram_id=telegram_id)
@@ -203,7 +209,7 @@ def user_entering_address(message):
     user = User.objects.get(telegram_id=message.chat.id)
     user.modify(is_status_change=0, address=address)
     data = user.formatted_data()
-    kb = inline_kb_from_list(constants.SETTING_TAG, constants.SETTINGS_KB, user.telegram_id)
+    kb = inline_kb_from_dict(constants.SETTINGS_KB, user.telegram_id)
     bot.send_message(message.chat.id, data, reply_markup=kb)
 
 
@@ -246,65 +252,156 @@ def handle_discount(message: Message):
 
 @bot.message_handler(func=lambda m: constants.START_KB[constants.CART] == m.text)
 def handle_cart(message: Message):
+    user = User.objects.get(telegram_id=message.chat.id)
+    cart = user.get_active_cart()
+    count_products = len(cart.products)
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     button = [KeyboardButton(n) for n in constants.ORDER_KB.values()]
     kb.add(*button)
-    bot.send_message(message.chat.id, 'Ваш заказ', reply_markup=kb)
-    cart = Cart.objects.get(user=message.chat.id)
+    bot.send_message(message.chat.id, f'Ваш заказ ({count_products})', reply_markup=kb)
+    id_ = cart.products[0].product.id
+    product = Product.objects.get(id=id_)
+    count_product = cart.products[0].count
+    price = product.product_price * count_product
+    kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
+    bot.send_message(
+        message.chat.id,
+        f'{product.title}, Количество - {count_product}, Цена {price}',
+        reply_markup=kb
+
+    )
+
+
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.NEXT_TAG)
+def handle_next_product(call):
+    telegram_id = json.loads(call.data)['id']
+    user = User.objects.get(telegram_id=telegram_id)
+    cart = user.get_active_cart()
+    count_products = len(cart.products)
+    status = cart.is_status
+    if status < (count_products - 1):
+        status += 1
+        cart.update(is_status=status)
+        id_ = cart.products[status].product.id
+        product = Product.objects.get(id=id_)
+        count_product = cart.products[status].count
+        price = product.product_price * count_product
+        kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=f'{product.title}, Количество - {count_product}, Цена {price}',
+            reply_markup=kb
+        )
+    else:
+        bot.answer_callback_query(
+            call.id,
+            'Это последний'
+        )
+
+
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.PREVIOUS_TAG)
+def handle_previous_product(call):
+    user = User.objects.get(telegram_id=call.message.chat.id)
+    cart = user.get_active_cart()
+    status = cart.is_status
+    if status > 0:
+        status -= 1
+        cart.update(is_status=status)
+        id_ = cart.products[status].product.id
+        product = Product.objects.get(id=id_)
+        count_product = cart.products[status].count
+        price = product.product_price * count_product
+        kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=f'{product.title}, Количество - {count_product}, Цена {price}',
+            reply_markup=kb
+        )
+    else:
+        bot.answer_callback_query(
+            call.id,
+            'Это первый'
+        )
+
+
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.INCREASE_TAG)
+def handle_increase_product(call):
+    telegram_id = json.loads(call.data)['id']
+    user = User.objects.get(telegram_id=telegram_id)
+    cart = user.get_active_cart()
+    status = cart.is_status
+    product = cart.products[status]
+    print(product)
+    product.count += 1
+    cart.save()
+    price = product.price * product.count
+    kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text=f'{product.title}, Количество - {product.count}, Цена {price}',
+        reply_markup=kb
+    )
+
+
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.REDUCE_TAG)
+def handle_reduce_product(call):
+    telegram_id = json.loads(call.data)['id']
+    user = User.objects.get(telegram_id=telegram_id)
+    cart = user.get_active_cart()
+    status = cart.is_status
+    product = cart.products[status]
+    product.count -= 1
+    price = product.price * product.count
     for p in cart.products:
-        ikb = InlineKeyboardMarkup()
-        button1 = InlineKeyboardButton(
-            text='+',
-            callback_data=json.dumps(
-                {
-                    'title': p.title,
-                    'tag': constants.CART_TAG
-                }
-            )
+        if p.count == 0:
+            cart.products.remove(p)
+            cart.save()
+    if len(cart.products) == 0:
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=f'Корзина пуста',
         )
-        button2 = InlineKeyboardButton(
-            text='-',
-            callback_data=json.dumps(
-                {
-                    'title': p.title,
-                    'tag': constants.CART_TAG
-                }
-            )
-        )
-        kb.add(button1, button2)
-        bot.send_message(
-            message.chat.id,
-            f'{p.title}\nКоличество - {p.count}\nЦена -{p.price}',
-            reply_markup=ikb
+    else:
+        kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=f'{product.title}, Количество - {product.count}, Цена {price}',
+            reply_markup=kb
         )
 
 
-@bot.message_handler(func=lambda m: constants.ORDER_KB[constants.CONTINUE] == m.text)
+@bot.message_handler(func=lambda m: constants.ORDER_KB[constants.RETURN_START] == m.text)
 def handler_continue(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
-    root_categories = Category.get_root_categories()
-    kbi = inline_kb_from_iterable(constants.CATEGORY_TAG, root_categories)
-    bot.send_message(
-        message.chat.id,
-        'Выберите категорию',
-        reply_markup=kbi
-    )
+    bot.send_message(message.chat.id, 'вы вернулись в главное меню', reply_markup=kb)
 
-    bot.send_message(message.chat.id, 'Выберите категорию', reply_markup=kb)
 
+@bot.message_handler(func=lambda m: constants.ORDER_KB[constants.FINISH] == m.text)
+def handler_continue(message: Message):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
+    kb.add(*buttons)
+    bot.send_message(message.chat.id, 'вы вернулись в главное меню', reply_markup=kb)
 
 
 
 # @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
 # def handle_increase_number_of_product(call):
-#     telegram_id = json.loads(call.data)['id']
-#     user = User.objects.get(telegram_id=telegram_id)
-#     user.modify(is_status_change=constants.FIRST_NAME)
+#     print(json.dumps(call.data))
+#     cart = Cart.objects.get(user=call.message.chat.id)
+#     product = cart.products
+#     print(product)
+#     print(call)
 #     bot.send_message(
 #         call.message.chat.id,
-#         'Напишите имя'
+#         'будем увеличивать'
 #     )
 #
 # @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)

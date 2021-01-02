@@ -18,18 +18,17 @@ class User(me.Document):
                f'Имя - {self.first_name}\nтелефон - {self.phone_number}\n' \
                f'email - {self.email}'
 
-    def get_active_card(self):
+    def get_active_cart(self):
         cart = Cart.objects(user=self, is_active=True).first()
-        if not hasattr(cart, 'ad'):
-            cart = Cart.objects.create(user=self)
-            #cart = Cart.objects(user=self, is_active=True).first()
+        if not hasattr(cart, 'id'):
+            Cart(user=self).save()
+            cart = Cart.objects(user=self, is_active=True).first()
             return cart
-        print(cart)
         return cart
 
     @staticmethod
-    def get_status_change(id_):
-        user = User.objects.get(telegram_id=id_)
+    def get_status_change(id):
+        user = User.objects.get(telegram_id=id)
         user_status_change = user.is_status_change
         return user_status_change
 
@@ -86,23 +85,33 @@ class Product(me.Document):
 
 
 class CartProducts(me.EmbeddedDocument):
+    product = me.ReferenceField(Product)
     title = me.StringField()
-    count = me.IntField(default=1)
+    count = me.IntField(default=1, min_value=1)
     price = me.FloatField()
 
     def __str__(self):
-        return f'{self.title}\nКоличество - {self.count}\nЦена - {self.price}'
+        total_price = self.count * self.price
+        return f'{self.title}\nКоличество - {self.count}\nЦена - {total_price}'
 
 
 class Cart(TimePublished):
     user = me.ReferenceField(User, required=True)
     products = me.ListField(me.EmbeddedDocumentField(CartProducts))
     is_active = me.BooleanField(default=True)
+    is_status = me.IntField(default=0)
 
     def add_product(self, product):
-        cart_product = CartProducts(title=product.title, price=product.product_price)
-        self.products.append(cart_product)
-        self.save()
+        is_product = False
+        for p in self.products:
+            if product.id == p.product.id:
+                is_product = True
+        if not is_product:
+            cart_product = CartProducts(product=product, title=product.title, price=product.product_price)
+            self.products.append(cart_product)
+            self.save()
+
+        return is_product
 
 
 class Order(TimePublished):
@@ -110,9 +119,7 @@ class Order(TimePublished):
     cart = me.ReferenceField(Cart, required=True)
     user_name = me.StringField(min_length=2, max_length=100)
     address = me.StringField(min_length=2)
-    email = me.StringField(min_length=10)
+    email = me.EmailField()
     phone = me.StringField(in_value=12)
     total_count = me.IntField()
     total_price = me.FloatField()
-
-
