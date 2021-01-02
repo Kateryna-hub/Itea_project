@@ -9,5 +9,5 @@ api = Api(app_rest)
 
 api.add_resource(UserResource, '/tg/user', '/tg/user/<string:telegram_id>')
 api.add_resource(CategoryResource, '/tg/category', '/tg/category/<string:id>')
-api.add_resource(ProductResource, '/tg/product')
+api.add_resource(ProductResource, '/tg/product', '/tg/product/<string:title>')
 api.add_resource(NewsResource, '/tg/news')

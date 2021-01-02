@@ -354,6 +354,7 @@ def handle_reduce_product(call):
     status = cart.is_status
     product = cart.products[status]
     product.count -= 1
+    cart.save()
     price = product.price * product.count
     for p in cart.products:
         if p.count == 0:

@@ -62,11 +62,14 @@ class ProductResource(Resource):
     def get(self, product=None):
         if product:
             product = Product.objects(title__contains=product)
-
+            return json.loads(product.to_json())
+        else:
+            product = Product.objects()
             return json.loads(product.to_json())
 
     def post(self):
         try:
+            product = json.loads(request.json)
             Product().load(request.json)
         except ValidationError as e:
             return {'text': str(e)}
