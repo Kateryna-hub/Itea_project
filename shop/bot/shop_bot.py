@@ -9,7 +9,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from ..models.shop_models import Category, User, Product, Cart, Order
 from ..models.extra_models import News
 from .config import TOKEN, WEBHOOK_URI
-from .utils import inline_kb_from_iterable, inline_kb_from_list
+from .utils import inline_kb_from_iterable, inline_kb_from_dict
 from . import constants
 
 app = Flask(__name__)
