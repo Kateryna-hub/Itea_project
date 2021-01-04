@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restful import Api
-from shop.bot.shop_bot import app
 from .resources import UserResource, CategoryResource, ProductResource, NewsResource
+
 
 app_rest = Flask(__name__)
 api = Api(app_rest)
