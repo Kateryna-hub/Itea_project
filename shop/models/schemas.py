@@ -42,6 +42,7 @@ class UserSchema(Schema):
     is_blocked = fields.Boolean(default=False)
     address = fields.String(min_length=4)
     is_status_change = fields.Integer(default=0)
+    is_status_order = fields.Integer(default=0)
 
 
 class TimePublishedSchema(Schema):
@@ -68,6 +69,7 @@ class CartSchema(TimePublishedSchema):
 
 class OrderSchema(TimePublishedSchema):
     id = fields.String(dump_only=True)
+    user = fields.Nested(UserSchema, required=True)
     number = fields.Integer(min_value=1, required=True)
     cart = fields.Nested(CartSchema, required=True)
     user_name = fields.String(min_length=2, max_length=100)
@@ -76,3 +78,5 @@ class OrderSchema(TimePublishedSchema):
     phone = fields.String(in_value=12)
     total_count = fields.Integer()
     total_price = fields.Float()
+    is_active = fields.Boolean(default=True)
+

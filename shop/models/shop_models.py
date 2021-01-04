@@ -12,6 +12,7 @@ class User(me.Document):
     is_blocked = me.BooleanField(default=False)
     address = me.StringField(min_length=4)
     is_status_change = me.IntField(default=0)
+    is_status_order = me.IntField(default=0)
 
     def formatted_data(self):
         return f'ID - {self.telegram_id}\nНикнейм - {self.username}\n' \
@@ -26,11 +27,21 @@ class User(me.Document):
             return cart
         return cart
 
+    def get_active_order(self):
+        order = Order.objects(user=self, is_active=True).first()
+        return order
+
     @staticmethod
-    def get_status_change(id):
-        user = User.objects.get(telegram_id=id)
+    def get_status_change(id_):
+        user = User.objects.get(telegram_id=id_)
         user_status_change = user.is_status_change
         return user_status_change
+
+    @staticmethod
+    def get_is_order(id_):
+        user = User.objects.get(telegram_id=id_)
+        user_status_order = user.is_status_order
+        return user_status_order
 
 
 class Category(me.Document):
@@ -92,7 +103,7 @@ class CartProducts(me.EmbeddedDocument):
 
     def __str__(self):
         total_price = self.count * self.price
-        return f'{self.title}\nКоличество - {self.count}\nЦена - {total_price}'
+        return f'{self.title}, Количество - {self.count}, Цена - {total_price}'
 
 
 class Cart(TimePublished):
@@ -115,6 +126,7 @@ class Cart(TimePublished):
 
 
 class Order(TimePublished):
+    user = me.ReferenceField(User, required=True)
     number = me.IntField(min_value=1, required=True)
     cart = me.ReferenceField(Cart, required=True)
     user_name = me.StringField(min_length=2, max_length=100)
@@ -123,3 +135,4 @@ class Order(TimePublished):
     phone = me.StringField(in_value=12)
     total_count = me.IntField()
     total_price = me.FloatField()
+    is_active = me.BooleanField(default=True)

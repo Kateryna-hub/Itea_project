@@ -48,6 +48,3 @@ def inline_kb_from_dict(
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(*buttons)
     return kb
-
-
-

@@ -333,7 +333,6 @@ def handle_increase_product(call):
     cart = user.get_active_cart()
     status = cart.is_status
     product = cart.products[status]
-    print(product)
     product.count += 1
     cart.save()
     price = product.price * product.count
@@ -377,7 +376,7 @@ def handle_reduce_product(call):
 
 
 @bot.message_handler(func=lambda m: constants.ORDER_KB[constants.RETURN_START] == m.text)
-def handler_continue(message: Message):
+def handler_return(message: Message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
@@ -385,32 +384,79 @@ def handler_continue(message: Message):
 
 
 @bot.message_handler(func=lambda m: constants.ORDER_KB[constants.FINISH] == m.text)
-def handler_continue(message: Message):
+def handler_finish(message: Message):
+    user = User.objects.get(telegram_id=message.chat.id)
+    cart = user.get_active_cart()
+    cart.is_active = False
+    cart.save()
+    number = len(Order.objects())
+    order = Order(user=user, number=number+1, cart=cart)
+    order.save()
+    bot.send_message(message.chat.id, constants.NAME_TEXT, reply_markup=ReplyKeyboardRemove())
+    user.modify(is_status_order=constants.FIRST_NAME)
+
+
+@bot.message_handler(func=lambda message: User.get_is_order(message.chat.id) == constants.FIRST_NAME)
+def order_entering_name(message):
+    text = f'"{message.text}"'
+    user = User.objects.get(telegram_id=message.chat.id)
+    order = user.get_active_order()
+    order.user_name = text
+    order.save()
+    bot.send_message(message.chat.id, constants.PHONE_TEXT)
+    user.modify(is_status_order=constants.PHONE)
+
+
+@bot.message_handler(func=lambda message: User.get_is_order(message.chat.id) == constants.PHONE)
+def order_entering_phone(message):
+    text = f'"{message.text}"'
+    user = User.objects.get(telegram_id=message.chat.id)
+    order = user.get_active_order()
+    order.phone = text
+    order.save()
+    bot.send_message(message.chat.id, constants.EMAIL_TEXT)
+    user.modify(is_status_order=constants.EMAIL)
+
+
+@bot.message_handler(func=lambda message: User.get_is_order(message.chat.id) == constants.EMAIL)
+def order_entering_email(message):
+    text = f'{message.text}'
+    user = User.objects.get(telegram_id=message.chat.id)
+    order = user.get_active_order()
+    order.email = text
+    order.save()
+    bot.send_message(message.chat.id, constants.ADDRESS_TEXT)
+    user.modify(is_status_order=constants.ADDRESS)
+
+
+@bot.message_handler(func=lambda message: User.get_is_order(message.chat.id) == constants.ADDRESS)
+def order_entering_address(message):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    button = KeyboardButton(constants.CONFIRM)
+    kb.add(button)
+    text = f'"{message.text}"'
+    user = User.objects.get(telegram_id=message.chat.id)
+    order = user.get_active_order()
+    order.address = text
+    order.save()
+    cart = order.cart
+    products = ''
+    for p in cart.products:
+        products += f'{p}\n'
+    text = f'Заказ № {order.number}\n\n{products}\n\nФИО - {order.user_name}\n' \
+           f'телефон - {order.phone}\nemail - {order.email}\nадрес - {order.address}'
+    bot.send_message(message.chat.id, text, reply_markup=kb)
+    user.modify(is_status_order=0)
+
+
+@bot.message_handler(func=lambda m: m.text == constants.CONFIRM)
+def handle_confirm(message: Message):
+    user = User.objects.get(telegram_id=message.chat.id)
+    order = user.get_active_order()
+    order.is_active = False
+    order.save()
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
-    bot.send_message(message.chat.id, 'вы вернулись в главное меню', reply_markup=kb)
+    bot.send_message(message.chat.id, constants.THANKS, reply_markup=kb)
 
-
-
-# @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
-# def handle_increase_number_of_product(call):
-#     print(json.dumps(call.data))
-#     cart = Cart.objects.get(user=call.message.chat.id)
-#     product = cart.products
-#     print(product)
-#     print(call)
-#     bot.send_message(
-#         call.message.chat.id,
-#         'будем увеличивать'
-#     )
-#
-# @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.CART_TAG)
-# def handle_reduce_number_of_product(call):
-#     telegram_id = json.loads(call.data)['id']
-#     user = User.objects.get(telegram_id=telegram_id)
-#     user.modify(is_status_change=constants.FIRST_NAME)
-#     bot.send_message(
-#         call.message.chat.id,
-#         'Напишите имя'
-#     )

@@ -1,5 +1,11 @@
 GREETINGS = 'Привет{}. Рады приветствовать тебя в нашем магазине-боте'
 ADD_TO_CART = 'Добавить в корзину'
+NAME_TEXT = 'Напишите ФИО'
+PHONE_TEXT = 'Напишите телефон'
+ADDRESS_TEXT = 'Напишите адрес'
+EMAIL_TEXT = 'Напишите email'
+CONFIRM = 'Подтвердить'
+THANKS = 'Спасибо за покупку'
 
 
 CATEGORIES = 1
@@ -63,8 +69,5 @@ PREVIOUS_TAG = 11
 NEXT_TAG = 12
 INCREASE_TAG = 13
 REDUCE_TAG = 14
-
-
-
 
 
