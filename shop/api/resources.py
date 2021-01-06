@@ -1,7 +1,6 @@
 from flask_restful import Resource
 from flask import request
-from shop.models.shop_models import User, Product, Category
-from shop.models.extra_models import News
+from shop.models.shop_models import User, Product, Category, News
 from shop.models.schemas import ProductSchemaRead, ProductSchemaWrite
 from marshmallow.exceptions import ValidationError
 
