@@ -88,8 +88,9 @@ class ProductResource(Resource):
         text = f'Товар удален'
         return text
 
+
 class NewsResource(Resource):
-    def get(self, news):
+    def get(self, news=None):
         if news:
             news = News.objects(title__contains=news)
             return json.loads(news.to_json())
