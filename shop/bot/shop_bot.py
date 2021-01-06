@@ -4,10 +4,7 @@ from mongoengine import NotUniqueError
 from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
                           InlineKeyboardButton, Message, Update
-
-
 from ..models.shop_models import Category, User, Product, Cart, Order
-from ..models.extra_models import News
 from .config import TOKEN, WEBHOOK_URI
 from .utils import inline_kb_from_iterable, inline_kb_from_dict
 from . import constants
