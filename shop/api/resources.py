@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request
 from shop.models.shop_models import User, Product, Category, News
-from shop.models.schemas import ProductSchemaRead, ProductSchemaWrite
+from shop.models.schemas import ProductSchemaRead, ProductSchemaWrite, NewsSchema
 from marshmallow.exceptions import ValidationError
 
 import json
@@ -93,9 +93,18 @@ class NewsResource(Resource):
         if news:
             news = News.objects(title__contains=news)
             return json.loads(news.to_json())
+        else:
+            news = News.objects()
+            return json.loads(news.to_json())
 
     def post(self):
-        pass
+        try:
+            NewsSchema().load(request.json)
+        except ValidationError as e:
+            return {'text': str(e)}
+        news = News(**request.json).save()
+        news.reload()
+        return NewsSchema().dump(news)
 
     def put(self, id):
         product = Product.objects(id=id)

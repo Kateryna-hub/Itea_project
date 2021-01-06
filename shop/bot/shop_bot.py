@@ -72,6 +72,7 @@ def handle_category_click(call):
 
     else:
         products = category.get_products()
+        print(products)
         for p in products:
             kb = InlineKeyboardMarkup()
             button = InlineKeyboardButton(
@@ -438,8 +439,13 @@ def order_entering_address(message):
     order.save()
     cart = order.cart
     products = ''
+    total_count = 0
+    total_price = 0
     for p in cart.products:
         products += f'{p}\n'
+        total_count += p.count
+        total_price += p.product_price
+    products += f'Всего товаров - {total_count}\nК оплате - {total_price}\n'
     text = f'Заказ № {order.number}\n\n{products}\n\nФИО - {order.user_name}\n' \
            f'телефон - {order.phone}\nemail - {order.email}\nадрес - {order.address}'
     bot.send_message(message.chat.id, text, reply_markup=kb)
