@@ -142,8 +142,20 @@ class Cart(TimePublished):
             cart_product = CartProducts(product=product, title=product.title, price=product.product_price)
             self.products.append(cart_product)
             self.save()
-
         return is_product
+
+    def total_count(self):
+        total_count = 0
+        for p in self.products:
+            total_count += p.count
+        return total_count
+
+    def total_price(self):
+        total_price = 0
+        for p in self.products:
+            tmp_price = p.price * p.count
+            total_price += tmp_price
+        return total_price
 
 
 class Order(TimePublished):

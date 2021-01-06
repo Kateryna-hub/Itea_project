@@ -4,7 +4,7 @@ from mongoengine import NotUniqueError
 from telebot import TeleBot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
                           InlineKeyboardButton, Message, Update, ReplyKeyboardRemove
-from ..models.shop_models import Category, User, Product, Cart, Order, News
+from shop.models.shop_models import Category, User, Product, Cart, Order, News
 from .config import TOKEN, WEBHOOK_URI
 from .utils import inline_kb_from_iterable, inline_kb_from_dict
 from . import constants
@@ -257,17 +257,24 @@ def handle_cart(message: Message):
     button = [KeyboardButton(n) for n in constants.ORDER_KB.values()]
     kb.add(*button)
     bot.send_message(message.chat.id, f'Ваш заказ ({count_products})', reply_markup=kb)
-    id_ = cart.products[0].product.id
-    product = Product.objects.get(id=id_)
-    count_product = cart.products[0].count
-    price = product.product_price * count_product
-    kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
-    bot.send_message(
-        message.chat.id,
-        f'{product.title}, Количество - {count_product}, Цена {price}',
-        reply_markup=kb
-
-    )
+    if count_products == 0:
+        text_message = 'Корзина пуста'
+        bot.send_message(
+            message.chat.id,
+            text_message
+        )
+    else:
+        id = cart.products[0].product.id
+        product = Product.objects.get(id=id)
+        count_product = cart.products[0].count
+        price = product.product_price * count_product
+        text_message = f'{product.title}, Количество - {count_product}, Цена {price}'
+        kb = inline_kb_from_dict(constants.CART_KB, user.telegram_id)
+        bot.send_message(
+            message.chat.id,
+            text_message,
+            reply_markup=kb
+        )
 
 
 @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants.NEXT_TAG)
@@ -385,11 +392,13 @@ def handler_return(message: Message):
 def handler_finish(message: Message):
     user = User.objects.get(telegram_id=message.chat.id)
     cart = user.get_active_cart()
+    count = cart.total_count()
+    price = cart.total_price()
+    number = len(Order.objects())
+    order = Order(user=user, number=number + 1, cart=cart, total_count=count, total_price=price)
+    order.save()
     cart.is_active = False
     cart.save()
-    number = len(Order.objects())
-    order = Order(user=user, number=number+1, cart=cart)
-    order.save()
     bot.send_message(message.chat.id, constants.NAME_TEXT, reply_markup=ReplyKeyboardRemove())
     user.modify(is_status_order=constants.FIRST_NAME)
 
@@ -439,13 +448,9 @@ def order_entering_address(message):
     order.save()
     cart = order.cart
     products = ''
-    total_count = 0
-    total_price = 0
     for p in cart.products:
         products += f'{p}\n'
-        total_count += p.count
-        total_price += p.product_price
-    products += f'Всего товаров - {total_count}\nК оплате - {total_price}\n'
+    products += f'Всего товаров - {order.total_count}\nК оплате - {order.total_price}\n'
     text = f'Заказ № {order.number}\n\n{products}\n\nФИО - {order.user_name}\n' \
            f'телефон - {order.phone}\nemail - {order.email}\nадрес - {order.address}'
     bot.send_message(message.chat.id, text, reply_markup=kb)
@@ -462,4 +467,3 @@ def handle_confirm(message: Message):
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
     bot.send_message(message.chat.id, constants.THANKS, reply_markup=kb)
-
