@@ -45,10 +45,10 @@ class UserSchema(Schema):
     is_status_order = fields.Integer(default=0)
 
 
-class TimePublishedSchema(Schema):
-    id = fields.String(dump_only=True)
-    created = fields.DateTime()
-    modified = fields.DateTime()
+# class TimePublishedSchema(Schema):
+#     id = fields.String(dump_only=True)
+#     created = fields.DateTime()
+#     modified = fields.DateTime()
 
 
 class CartProductsSchema(Schema):
@@ -59,7 +59,7 @@ class CartProductsSchema(Schema):
     price = fields.Float()
 
 
-class CartSchema(TimePublishedSchema):
+class CartSchema(Schema):
     id = fields.String(dump_only=True)
     user = fields.Nested(UserSchema, required=True)
     products = fields.Nested(CartProductsSchema)
@@ -67,7 +67,7 @@ class CartSchema(TimePublishedSchema):
     is_status = fields.Integer(default=0)
 
 
-class OrderSchema(TimePublishedSchema):
+class OrderSchema(Schema):
     id = fields.String(dump_only=True)
     user = fields.Nested(UserSchema, required=True)
     number = fields.Integer(min_value=1, required=True)
@@ -79,4 +79,10 @@ class OrderSchema(TimePublishedSchema):
     total_count = fields.Integer()
     total_price = fields.Float()
     is_active = fields.Boolean(default=True)
+
+
+class NewsSchema(Schema):
+    id = fields.String(dump_only=True)
+    title = fields.String(required=True, min_length=2, max_length=256)
+    body = fields.String(required=True, min_length=2, max_length=2048)
 

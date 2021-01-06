@@ -70,7 +70,6 @@ class ProductResource(Resource):
 
     def post(self):
         try:
-
             ProductSchemaWrite().load(request.json)
         except ValidationError as e:
             return {'text': str(e)}
@@ -94,7 +93,6 @@ class NewsResource(Resource):
     def get(self, news):
         if news:
             news = News.objects(title__contains=news)
-
             return json.loads(news.to_json())
 
     def post(self):
