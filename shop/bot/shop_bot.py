@@ -439,8 +439,9 @@ def order_entering_email(message):
 @bot.message_handler(func=lambda message: User.get_is_order(message.chat.id) == constants.ADDRESS)
 def order_entering_address(message):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    button = KeyboardButton(constants.CONFIRM)
-    kb.add(button)
+    button1 = KeyboardButton(constants.CONFIRM)
+    button2 = KeyboardButton(constants.CANCEL)
+    kb.add(button1, button2)
     text = f'"{message.text}"'
     user = User.objects.get(telegram_id=message.chat.id)
     order = user.get_active_order()
@@ -467,3 +468,15 @@ def handle_confirm(message: Message):
     buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
     kb.add(*buttons)
     bot.send_message(message.chat.id, constants.THANKS, reply_markup=kb)
+
+
+@bot.message_handler(func=lambda m: m.text == constants.CANCEL)
+def handle_cancel(message: Message):
+    user = User.objects.get(telegram_id=message.chat.id)
+    order = user.get_active_order()
+    order.is_active = False
+    order.save()
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = [KeyboardButton(n) for n in constants.START_KB.values()]
+    kb.add(*buttons)
+    bot.send_message(message.chat.id, constants.GREETINGS, reply_markup=kb)

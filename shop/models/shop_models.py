@@ -1,4 +1,5 @@
 import mongoengine as me
+from mongoengine import CASCADE
 from . import me
 import datetime
 
@@ -108,7 +109,7 @@ class Product(me.Document):
     discount = me.IntField(min_value=0, max_value=100, default=0)
     price = me.FloatField(required=True)
     image = me.FileField()
-    category = me.ReferenceField(Category, required=True)
+    category = me.ReferenceField(Category, required=True, reverse_delete_rule=CASCADE)
     parameters = me.EmbeddedDocumentField(Parameters)
 
     @property

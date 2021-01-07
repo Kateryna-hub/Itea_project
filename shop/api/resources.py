@@ -1,10 +1,34 @@
 from flask_restful import Resource
 from flask import request
-from shop.models.shop_models import User, Product, Category, News
-from shop.models.schemas import ProductSchemaRead, ProductSchemaWrite, NewsSchema
+from shop.models.shop_models import User, Product, Category, News, Order
+from shop.models.schemas import ProductSchemaRead, ProductSchemaWrite, NewsSchema, CategorySchema
+from shop.bot.sending_news import Sender
 from marshmallow.exceptions import ValidationError
 
 import json
+
+
+class OrderResource(Resource):
+
+    def get(self, id=None):
+        if id:
+            order = Order.objects(id=id)
+            return json.loads(order.to_json())
+        else:
+            orders = Order.objects()
+            return json.loads(orders.to_json())
+
+    def put(self, id):
+        order = Order.objects(id=id)
+        order.update(**request.json)
+        order.reload()
+        return json.loads(order.to_json())
+
+    def delete(self, id):
+        order = Order.objects(id=id)
+        order.delete()
+        text = f'Заказ {order.number} удален'
+        return text
 
 
 class UserResource(Resource):
@@ -34,19 +58,26 @@ class UserResource(Resource):
 
 
 class CategoryResource(Resource):
-    def get(self, category=None):
-        if category:
-            categories = Category.objects(parent=category)
+    def get(self, id=None):
+        if id:
+            categories = Category.objects(parent=id)
             return json.loads(categories.to_json())
         else:
             category = Category.objects()
             return json.loads(category.to_json())
 
     def post(self):
-        pass
+        try:
+            CategorySchema().load(request.json)
+        except ValidationError as e:
+            return {'text': str(e)}
+        categories = Category(**request.json)
+        categories.save()
+        categories.reload()
+        return CategorySchema().dump(categories)
 
     def put(self, id):
-        categories = Category.objects(id=id)
+        categories = Category.objects.get(id=id)
         categories.update(**request.json)
         categories.reload()
         return json.loads(categories.to_json())
@@ -59,20 +90,24 @@ class CategoryResource(Resource):
 
 
 class ProductResource(Resource):
-    def get(self, product=None):
-        if product:
-            product = Product.objects(title__contains=product)
+    def get(self, id=None, title=None):
+        if id:
+            product = Product.objects(id=id)
+            return json.loads(product.to_json())
+        if title:
+            product = Product.objects(title__contains=title)
             return json.loads(product.to_json())
         else:
-            product = Product.objects()
-            return json.loads(product.to_json())
+            products = Product.objects()
+            return json.loads(products.to_json())
 
     def post(self):
         try:
             ProductSchemaWrite().load(request.json)
         except ValidationError as e:
             return {'text': str(e)}
-        product = Product(**request.json).save()
+        product = Product(**request.json)
+        product.save()
         product.reload()
         return ProductSchemaRead().dump(product)
 
@@ -90,9 +125,9 @@ class ProductResource(Resource):
 
 
 class NewsResource(Resource):
-    def get(self, news=None):
-        if news:
-            news = News.objects(title__contains=news)
+    def get(self, id=None):
+        if id:
+            news = News.objects(id=id)
             return json.loads(news.to_json())
         else:
             news = News.objects()
@@ -103,18 +138,22 @@ class NewsResource(Resource):
             NewsSchema().load(request.json)
         except ValidationError as e:
             return {'text': str(e)}
-        news = News(**request.json).save()
+        news = News(**request.json)
+        news.save()
         news.reload()
+        show_news = f' {news.title}\n{news.body}'
+        s = Sender(User.objects(), text=show_news)
+        s.send_message()
         return NewsSchema().dump(news)
 
     def put(self, id):
-        product = Product.objects(id=id)
-        product.update(**request.json)
-        product.reload()
-        return json.loads(product.to_json())
+        news = News.objects.get(id=id)
+        news.update(**request.json)
+        news.reload()
+        return json.loads(news.to_json())
 
     def delete(self, id):
-        product = Product.objects(id=id)
-        product.delete()
-        text = f'Товар удален'
+        news = News.objects(id=id)
+        news.delete()
+        text = f'Новость удалена'
         return text
