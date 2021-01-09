@@ -144,6 +144,7 @@ class NewsResource(Resource):
         show_news = f' {news.title}\n{news.body}'
         s = Sender(User.objects(), text=show_news)
         s.send_message()
+        news.reload()
         return NewsSchema().dump(news)
 
     def put(self, id):
